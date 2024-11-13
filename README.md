@@ -1,9 +1,9 @@
 # PCA-EXP-4-MATRIX-ADDITION-WITH-UNIFIED-MEMORY AY 23-24
-<h3>ENTER YOUR NAME : DHARSHAN V</h3>
-<h3>ENTER YOUR REGISTER NO : 212222230031</h3>
-<h3>EX. NO : 4</h3>
 
-<h1> <align=center> MATRIX ADDITION WITH UNIFIED MEMORY </h3>
+<h3>ENTER YOUR NAME : dharshan v</h3>
+<h3>ENTER YOUR REGISTER NO : 212222230031</h3>
+<h3>DATE: </h3>
+<h2> <align=center> MATRIX ADDITION WITH UNIFIED MEMORY </h2>
   Refer to the program sumMatrixGPUManaged.cu. Would removing the memsets below affect performance? If you can, check performance with nvprof or nvvp.</h3>
 
 ## AIM:
@@ -38,8 +38,8 @@ Allocate Host Memory
 22.	Reset the device using cudaDeviceReset and return from the main function.
 
 ## PROGRAM:
-### WITH MEMSET:
-```
+
+```C
 %%cuda
 #include <stdio.h>
 #include <cuda_runtime.h>
@@ -123,12 +123,10 @@ inline double seconds()
 void initialData(float *ip, const int size)
 {
     int i;
-
     for (i = 0; i < size; i++)
     {
         ip[i] = (float)( rand() & 0xFF ) / 10.0f;
     }
-
     return;
 }
 
@@ -137,7 +135,6 @@ void sumMatrixOnHost(float *A, float *B, float *C, const int nx, const int ny)
     float *ia = A;
     float *ib = B;
     float *ic = C;
-
     for (int iy = 0; iy < ny; iy++)
     {
         for (int ix = 0; ix < nx; ix++)
@@ -149,7 +146,6 @@ void sumMatrixOnHost(float *A, float *B, float *C, const int nx, const int ny)
         ib += nx;
         ic += nx;
     }
-
     return;
 }
 
@@ -157,7 +153,6 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
 {
     double epsilon = 1.0E-8;
     bool match = 1;
-
     for (int i = 0; i < N; i++)
     {
         if (abs(hostRef[i] - gpuRef[i]) > epsilon)
@@ -167,7 +162,6 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
             break;
         }
     }
-
     if (!match)
     {
         printf("Arrays do not match.\n\n");
@@ -178,22 +172,16 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
 __global__ void sumMatrixGPU(float *MatA, float *MatB, float *MatC, int nx,
                              int ny)
 {
-
-
-
    unsigned int ix = threadIdx.x + blockIdx.x * blockDim.x;
     unsigned int iy = threadIdx.y + blockIdx.y * blockDim.y;
     unsigned int idx = iy * nx + ix;
-
     if (ix < nx && iy < ny)
         MatC[idx] = MatA[idx] + MatB[idx];
-
 }
 
 int main(int argc, char **argv)
 {
     printf("%s Starting ", argv[0]);
-
     // set up device
     int dev = 0;
     cudaDeviceProp deviceProp;
@@ -204,11 +192,8 @@ int main(int argc, char **argv)
     // set up data size of matrix
     int nx, ny;
     int ishift = 12;
-
     if  (argc > 1) ishift = atoi(argv[1]);
-
     nx = ny = 1 << ishift;
-
     int nxy = nx * ny;
     int nBytes = nxy * sizeof(float);
     printf("Matrix size: nx %d ny %d\n", nx, ny);
@@ -270,12 +255,11 @@ int main(int argc, char **argv)
 
     // reset device
     CHECK(cudaDeviceReset());
-
     return (0);
 }
 ```
-### WITHOUT MEMSET:
-```
+## WITHOUT MEMSET
+```C
 %%cuda
 #include <stdio.h>
 #include <cuda_runtime.h>
@@ -373,19 +357,16 @@ void sumMatrixOnHost(float *A, float *B, float *C, const int nx, const int ny)
     float *ia = A;
     float *ib = B;
     float *ic = C;
-
     for (int iy = 0; iy < ny; iy++)
     {
         for (int ix = 0; ix < nx; ix++)
         {
             ic[ix] = ia[ix] + ib[ix];
         }
-
         ia += nx;
         ib += nx;
         ic += nx;
     }
-
     return;
 }
 
@@ -393,7 +374,6 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
 {
     double epsilon = 1.0E-8;
     bool match = 1;
-
     for (int i = 0; i < N; i++)
     {
         if (abs(hostRef[i] - gpuRef[i]) > epsilon)
@@ -403,7 +383,6 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
             break;
         }
     }
-
     if (!match)
     {
         printf("Arrays do not match.\n\n");
@@ -414,9 +393,6 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
 __global__ void sumMatrixGPU(float *MatA, float *MatB, float *MatC, int nx,
                              int ny)
 {
-
-
-
    unsigned int ix = threadIdx.x + blockIdx.x * blockDim.x;
     unsigned int iy = threadIdx.y + blockIdx.y * blockDim.y;
     unsigned int idx = iy * nx + ix;
@@ -484,9 +460,7 @@ int main(int argc, char **argv)
 
     // after warm-up, time with unified memory
     iStart = seconds();
-
     sumMatrixGPU<<<grid, block>>>(A, B, gpuRef, nx, ny);
-
     CHECK(cudaDeviceSynchronize());
     iElaps = seconds() - iStart;
     printf("sumMatrix on gpu :\t %f sec <<<(%d,%d), (%d,%d)>>> \n", iElaps,
@@ -506,16 +480,15 @@ int main(int argc, char **argv)
 
     // reset device
     CHECK(cudaDeviceReset());
-
     return (0);
 }
 ```
+
 ## OUTPUT:
 ### WITH MEMSET:
-![Screenshot 2024-10-06 193732](https://github.com/user-attachments/assets/76a8e832-86c3-4cf8-9ee1-2b557ab8a5f7)
-
+![image](https://github.com/user-attachments/assets/ae3e030f-db68-42cd-8ca7-d1d0489f35ba)
 ### WITHOUT MEMSET:
-![Screenshot 2024-10-06 193743](https://github.com/user-attachments/assets/b80a3c5d-be18-4969-bb15-d46f0c78ee62)
+![image](https://github.com/user-attachments/assets/37d73795-386d-4bff-b46e-8e838d848650)
 
 ## RESULT:
-Thus the program has been executed by using unified memory. It is observed that removing memset function has given less 0.020635 time.
+Thus the program has been executed by using unified memory. It is observed that removing memset function has given less/more 0.106563 time.
